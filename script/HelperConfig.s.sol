@@ -8,7 +8,7 @@ import {MockV3Aggregator} from "../test/mocks/MockV3Aggregator.sol";
 contract HelperConfig is Script {
     NetworkConfig public activeNetworkConfig;
     uint8 public constant ETH_USD_DECIMALS = 8;
-    uint256 public constant ETH_USD_INITIAL_PRICE = 2000e8;
+    int256 public constant ETH_USD_INITIAL_PRICE = 2000e8;
 
     struct NetworkConfig {
         address pricefeed;
@@ -18,7 +18,7 @@ contract HelperConfig is Script {
         if (block.chainid == 11155111) {
             activeNetworkConfig = getSepoliaEthConfig();
         } else {
-            activeNetworkConfig = getAnvilEthConfig();
+            activeNetworkConfig = getOrCreateAnvilEthConfig();
         }
     }
 
@@ -28,7 +28,11 @@ contract HelperConfig is Script {
         return sepoliaConfig;
     }
 
-    function getAnvilEthConfig() public returns (NetworkConfig memory) {
+    function getOrCreateAnvilEthConfig() public returns (NetworkConfig memory) {
+        // check so we don't redeploy every time
+        if (activeNetworkConfig.pricefeed != address(0)) {
+            return activeNetworkConfig;
+        }
         // deploy mocks
         vm.startBroadcast();
         MockV3Aggregator mockPriceFeed = new MockV3Aggregator(ETH_USD_DECIMALS, ETH_USD_INITIAL_PRICE);
