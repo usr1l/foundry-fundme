@@ -20,8 +20,8 @@ contract FundMeTest is Test {
     FundMe fundMe;
 
     function setUp() external {
-        DeployFundMe deployFundMe = new DeployFundMe()
-        fundMe = DeployFundMe.run();
+        DeployFundMe deployFundMe = new DeployFundMe();
+        fundMe = deployFundMe.run();
     }
 
     function testMinimumUsdIsFive() external view {
