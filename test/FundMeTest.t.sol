@@ -21,7 +21,7 @@ contract FundMeTest is Test {
 
     address USER = makeAddr("user");
     uint256 constant SEND_VAL = 0.1 ether;
-    uint constant GAS_PRICE = 1 gwei;
+    uint256 constant GAS_PRICE = 1 gwei;
 
     function setUp() external {
         // console.log("MSG.SENDER in setUp:", msg.sender); // 0x1804
@@ -132,7 +132,6 @@ contract FundMeTest is Test {
         // vm.prank(fundMe.getOwner());
         // fundMe.withdraw();
 
-
         // use startPrank and stopPrank to prank multiple txs, works like startBroadcast and stopBroadcast
         vm.startPrank(fundMe.getOwner());
         fundMe.withdraw();
@@ -140,6 +139,62 @@ contract FundMeTest is Test {
 
         assertEq(address(fundMe).balance, 0);
         assertEq(fundMe.getOwner().balance, startingOwnerBalance + fundMeStartingBalance);
+    }
 
+    function testCheaperWithdrawWithASingleFunder() external funded {
+        // arrange
+        // can always check any address balance with address(this).balance
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 startingFundMeBalance = address(fundMe).balance;
+
+        // act
+        // check how much gas was sent in the initial tx message
+        uint256 gasStart = gasleft();
+        vm.txGasPrice(GAS_PRICE);
+        vm.prank(fundMe.getOwner());
+        fundMe.cheaperWithdraw();
+
+        uint256 gasEnd = gasleft();
+        uint256 gasUsed = gasStart - gasEnd;
+        uint256 gasCost = gasUsed * tx.gasprice;
+
+        console.log("Gas used:", gasUsed);
+
+        // assert
+        uint256 endingOwnerBalance = fundMe.getOwner().balance;
+        uint256 endingFundMeBalance = address(fundMe).balance;
+
+        assertEq(endingOwnerBalance, startingOwnerBalance + startingFundMeBalance);
+        assertEq(endingFundMeBalance, 0);
+    }
+
+    function testCheaperWithdrawFromMultipleFunders() external funded {
+        // uint256 numberOfFunders = 10;
+        // when working with addresses, use uint160 to avoid typecasting issues
+        uint160 numberOfFunders = 10;
+        uint160 startingFunderIndex = 1;
+        for (uint160 i = startingFunderIndex; i < numberOfFunders; i++) {
+            // address funder = makeAddr("funder");
+            // vm.deal(funder, 10e18);
+            // vm.prank(funder);
+
+            // here use hoax cheatcode instead
+            // address(i) will convert uint160 to address, pads left with zeros
+            hoax(address(i), SEND_VAL);
+            fundMe.fund{value: SEND_VAL}();
+        }
+
+        uint256 startingOwnerBalance = fundMe.getOwner().balance;
+        uint256 fundMeStartingBalance = address(fundMe).balance;
+        // vm.prank(fundMe.getOwner());
+        // fundMe.withdraw();
+
+        // use startPrank and stopPrank to prank multiple txs, works like startBroadcast and stopBroadcast
+        vm.startPrank(fundMe.getOwner());
+        fundMe.cheaperWithdraw();
+        vm.stopPrank();
+
+        assertEq(address(fundMe).balance, 0);
+        assertEq(fundMe.getOwner().balance, startingOwnerBalance + fundMeStartingBalance);
     }
 }
