@@ -3,8 +3,8 @@
 pragma solidity ^0.8.18;
 import {console} from "forge-std/console.sol";
 import {Test} from "forge-std/Test.sol";
-import {FundMe} from "../src/FundMe.sol";
-import {DeployFundMe} from "../script/DeployFundMe.s.sol";
+import {FundMe} from "../../src/FundMe.sol";
+import {DeployFundMe} from "../../script/DeployFundMe.s.sol";
 
 // four different kinds of tests
 // 1. unit tests
